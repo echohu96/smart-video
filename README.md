@@ -69,6 +69,9 @@ python src/main.py --url "https://www.youtube.com/watch?v=xxx"
 
 # 指定输出文件
 python src/main.py --url "https://www.youtube.com/watch?v=xxx" --output summary.md
+
+# 仅保存转录文本（不调用 AI，总结）
+python src/main.py --url "https://www.youtube.com/watch?v=xxx" --skip-summary --output transcript.txt
 ```
 
 ## 项目状态
@@ -114,4 +117,3 @@ MIT License
 ## 作者
 
 echohu96
-
