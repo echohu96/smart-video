@@ -1,0 +1,91 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Documentation (保留 README，其他文档不打包到镜像)
+docs/
+CHANGELOG.md
+*.md
+!README.md
+
+# Output and Cache (不打包到镜像，使用卷挂载)
+output/
+cache/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Cursor
+.cursor/
+
+# Video files (不应该存在，但以防万一)
+*.mp4
+*.webm
+*.mkv
+*.avi
+*.mov
+*.mp3
+*.m4a
+*.wav
+
+# Subtitle files (不应该存在，但以防万一)
+*.srt
+*.vtt
+*.ttml
+
+# Tests
+tests/
+test_*.py
+*_test.py
+

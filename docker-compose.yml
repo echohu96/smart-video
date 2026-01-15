@@ -1,0 +1,51 @@
+services:
+  smart-video:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smart-video
+    image: smart-video:latest
+    
+    # 环境变量（从 .env 文件加载）
+    env_file:
+      - .env
+    
+    # 数据卷挂载
+    volumes:
+      # 输出目录：保存生成的总结文件
+      - ./output:/app/output
+      # 缓存目录：字幕缓存和临时文件
+      - ./cache:/app/cache
+      # 环境变量文件
+      - ./.env:/app/.env:ro
+    
+    # 工作目录
+    working_dir: /app
+    
+    # 保持容器运行（用于交互式使用）
+    stdin_open: true
+    tty: true
+    
+    # 重启策略
+    restart: unless-stopped
+    
+    # 资源限制（可选，根据需要调整）
+    # 注意：使用 Whisper 时可能需要更多内存
+    # 240MB 音频文件可能需要 2-3GB 内存进行转录
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 6G  # 增加内存限制，240MB 音频需要更多内存
+        reservations:
+          cpus: '0.5'
+          memory: 2G  # 增加预留内存
+    
+    # 网络配置
+    networks:
+      - smart-video-network
+
+networks:
+  smart-video-network:
+    driver: bridge
+
