@@ -5,6 +5,7 @@ CLI 接口
 
 import os
 import sys
+from pathlib import Path
 import click
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -12,6 +13,7 @@ from rich.panel import Panel
 from rich.text import Text
 
 from .utils.logger import get_logger
+from .utils.file_manager import get_output_dir
 from .utils.platform_detector import PlatformDetector, VideoPlatform
 from .utils.exceptions import (
     SmartVideoError,
@@ -33,6 +35,62 @@ logger = get_logger(__name__)
 console = Console()
 
 
+def _sanitize_filename(filename: str, max_length: int = 100) -> str:
+    """
+    清理文件名，移除特殊字符
+    """
+    invalid_chars = '<>:"/\\|?*'
+    for char in invalid_chars:
+        filename = filename.replace(char, '_')
+
+    filename = filename.strip(' .')
+
+    if len(filename) > max_length:
+        filename = filename[:max_length]
+
+    if not filename:
+        filename = "video_transcript"
+
+    return filename
+
+
+def _resolve_transcript_output_path(output: str | None, title: str) -> Path:
+    output_dir = get_output_dir()
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    if output:
+        output_path = Path(output)
+        if not output_path.is_absolute():
+            output_path = output_dir / output_path
+    else:
+        safe_title = _sanitize_filename(title)
+        output_path = output_dir / f"{safe_title}.txt"
+
+    if output_path.exists():
+        base_name = output_path.stem
+        suffix = output_path.suffix or ".txt"
+        counter = 1
+        while output_path.exists():
+            output_path = output_path.with_name(f"{base_name}_{counter}{suffix}")
+            counter += 1
+
+    return output_path
+
+
+def _write_transcript(text_content: str, metadata, output: str | None) -> Path:
+    output_path = _resolve_transcript_output_path(output, metadata.title)
+    header_lines = [
+        f"Title: {metadata.title}",
+        f"Author: {metadata.author}",
+        f"Duration: {metadata.duration // 60} min",
+        f"URL: {metadata.url}",
+        "",
+    ]
+    content = "\n".join(header_lines) + text_content
+    output_path.write_text(content, encoding="utf-8")
+    return output_path
+
+
 def process_video(
     url: str,
     output: str = None,
@@ -40,6 +98,7 @@ def process_video(
     use_whisper: bool = False,
     force_whisper: bool = False,
     no_cache: bool = False,
+    skip_summary: bool = False,
 ):
     """
     处理视频，生成总结
@@ -51,6 +110,7 @@ def process_video(
         use_whisper: 是否使用 Whisper（无字幕时）
         force_whisper: 强制使用 Whisper（即使有字幕）
         no_cache: 禁用缓存
+        skip_summary: 仅保存转录文本，不生成总结
     """
     try:
         # 检测平台
@@ -188,7 +248,10 @@ def process_video(
                     console=console
                 ) as progress:
                     task = progress.add_task("下载字幕文件...", total=None)
-                    subtitle_file = platform.download_subtitle(url)
+                    subtitle_file = platform.download_subtitle(
+                        url,
+                        use_cache=not no_cache
+                    )
                     progress.update(task, completed=True)
                 
                 console.print(f"[green]✓[/green] 字幕下载完成")
@@ -280,6 +343,18 @@ def process_video(
                 else:
                     raise
         
+        if skip_summary:
+            output_path = _write_transcript(text_content, metadata, output)
+            console.print("[green]✓[/green] 已保存转录文本")
+            console.print("")
+            console.print(Panel(
+                f"[bold green]处理完成！[/bold green]\n\n"
+                f"输出文件: [cyan]{output_path}[/cyan]",
+                title="成功",
+                border_style="green"
+            ))
+            return str(output_path)
+
         # AI 总结
         with Progress(
             SpinnerColumn(),
@@ -355,7 +430,8 @@ def process_video(
 @click.option('--use-whisper', is_flag=True, help='无字幕时使用 Whisper 转录')
 @click.option('--force-whisper', is_flag=True, help='强制使用 Whisper（即使有字幕）')
 @click.option('--no-cache', is_flag=True, help='禁用缓存')
-def main(url, output, ai_provider, use_whisper, force_whisper, no_cache):
+@click.option('--skip-summary', is_flag=True, help='仅生成转录文本，不调用 AI 总结')
+def main(url, output, ai_provider, use_whisper, force_whisper, no_cache, skip_summary):
     """
     Smart Video - 智能视频总结工具
     
@@ -374,9 +450,9 @@ def main(url, output, ai_provider, use_whisper, force_whisper, no_cache):
         use_whisper=use_whisper,
         force_whisper=force_whisper,
         no_cache=no_cache,
+        skip_summary=skip_summary,
     )
 
 
 if __name__ == '__main__':
     main()
-

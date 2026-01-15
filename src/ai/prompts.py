@@ -97,3 +97,22 @@ def get_simple_summary_prompt() -> str:
 
 请用中文输出。"""
 
+
+def get_chunk_summary_prompt(chunk_index: int, total_chunks: int) -> str:
+    """
+    获取分段总结提示词（用于长文本分段总结）
+    
+    Args:
+        chunk_index: 当前分段索引（从 1 开始）
+        total_chunks: 总分段数
+    
+    Returns:
+        提示词字符串
+    """
+    return f"""请总结以下视频转录片段（第 {chunk_index}/{total_chunks} 段），要求：
+1. 提取片段的关键观点和信息
+2. 保留专业术语和重要名词
+3. 使用简洁清晰的中文表达
+4. 以要点列表输出（3-8 条）
+
+请直接输出要点列表，不要添加额外标题。"""

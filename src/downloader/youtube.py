@@ -28,7 +28,8 @@ class YouTubePlatform(VideoPlatform):
         self,
         url: str,
         languages: Optional[List[str]] = None,
-        output_dir: Optional[str] = None
+        output_dir: Optional[str] = None,
+        use_cache: bool = True
     ) -> Optional[str]:
         """
         下载字幕文件（不下载视频）
@@ -48,7 +49,8 @@ class YouTubePlatform(VideoPlatform):
         return self.subtitle_downloader.download(
             url=url,
             languages=languages,
-            output_dir=output_dir
+            output_dir=output_dir,
+            use_cache=use_cache
         )
     
     def download_audio(
@@ -167,4 +169,3 @@ class YouTubePlatform(VideoPlatform):
             是否有字幕
         """
         return self.subtitle_downloader.has_subtitle(url=url, languages=languages)
-
